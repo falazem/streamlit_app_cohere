@@ -7,6 +7,8 @@ from sklearn.cluster import KMeans
 import os
 from dotenv import load_dotenv
 import cohere
+import streamlit as st
+
 
 
 load_dotenv()

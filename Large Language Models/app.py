@@ -1,5 +1,5 @@
 import streamlit as st
-from module4_streamlit import generate_idea, generate_name
+from streamlit import generate_idea, generate_name
 
 
 st.title("🚀 Startup Idea Generator")
