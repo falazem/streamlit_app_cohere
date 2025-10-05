@@ -1,10 +1,10 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import cohere
 
 
-load_dotenv()
+#load_dotenv()
 co = cohere.ClientV2(os.getenv("API_KEY"))
 
 def generate_idea(industry, temperature):
