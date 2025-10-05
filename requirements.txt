@@ -1,9 +1,9 @@
+streamlit
+cohere
+python-dotenv
 numpy
+pandas
+matplotlib
 seaborn
 altair
 scikit-learn
-python-dotenv
-matplotlib
-pandas
-cohere
-streamlit
