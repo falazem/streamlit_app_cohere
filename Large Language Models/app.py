@@ -1,11 +1,19 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
 import cohere
 
 
-load_dotenv()
-co = cohere.ClientV2(os.getenv("API_KEY"))
+# Try to get API key from Streamlit secrets first, then fall back to environment variables
+try:
+    api_key = st.secrets["API_KEY"]
+except (KeyError, FileNotFoundError):
+    api_key = os.getenv("API_KEY")
+
+if not api_key:
+    st.error("API_KEY not found. Please set it in Streamlit Cloud secrets or as an environment variable.")
+    st.stop()
+
+co = cohere.ClientV2(api_key)
 
 def generate_idea(industry, temperature):
     
