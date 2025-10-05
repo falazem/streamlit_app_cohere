@@ -1,5 +1,5 @@
 streamlit
-cohere==5.5.8
+cohere
 numpy
 pandas
 matplotlib

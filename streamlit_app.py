@@ -13,7 +13,7 @@ if not api_key:
     st.error("API_KEY not found. Please set it in Streamlit Cloud secrets or as an environment variable.")
     st.stop()
 
-co = cohere.ClientV2(api_key)
+co = cohere.Client(api_key)
 
 def generate_idea(industry, temperature):
     
@@ -37,10 +37,10 @@ Startup Idea:"""
 
     # Call the Cohere Chat endpoint
     response = co.chat( 
-            messages=[{"role": "user", "content": prompt}],
-            model="command-a-03-2025")
+            message=prompt,
+            model="command-r-plus")
         
-    return response.message.content[0].text
+    return response.text
 
 
 def generate_name(idea, temperature):
@@ -65,10 +65,10 @@ Startup Name:"""
 
     # Call the Cohere Chat endpoint
     response = co.chat( 
-            messages=[{"role": "user", "content": prompt}],
-            model="command-a-03-2025")
+            message=prompt,
+            model="command-r-plus")
         
-    return response.message.content[0].text
+    return response.text
 
 st.title("🚀 Startup Idea Generator")
 
