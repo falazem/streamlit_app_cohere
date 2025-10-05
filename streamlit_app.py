@@ -5,8 +5,18 @@ import textwrap
 import cohere
 import streamlit as st
 
+# Try to get API key from Streamlit secrets first, then fall back to environment variables
+try:
+    api_key = st.secrets["COHERE_API_KEY"]
+except (KeyError, FileNotFoundError):
+    api_key = os.getenv("COHERE_API_KEY")
+
+if not api_key:
+    st.error("COHERE_API_KEY not found. Please set it in Streamlit Cloud secrets or as an environment variable.")
+    st.stop()
+
 # Set up Cohere client
-co = cohere.ClientV2("COHERE_API_KEY") # Get your free API key: https://dashboard.cohere.com/api-keys
+co = cohere.ClientV2(api_key)
 
 def generate_idea(industry, temperature):
 
