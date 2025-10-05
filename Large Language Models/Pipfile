@@ -13,6 +13,7 @@ matplotlib = "*"
 pandas = "*"
 cohere = "*"
 streamlit = "*"
+fastapi = "*"
 
 [dev-packages]
 
