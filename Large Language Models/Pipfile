@@ -13,6 +13,7 @@ matplotlib = "*"
 pandas = "*"
 cohere = "*"
 streamlit = "*"
+weaviate-client = "==4.5.4"
 
 [dev-packages]
 
