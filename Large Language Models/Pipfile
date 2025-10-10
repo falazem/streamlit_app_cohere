@@ -14,6 +14,8 @@ pandas = "*"
 cohere = "*"
 streamlit = "*"
 weaviate-client = "==4.5.4"
+guardrails-ai = "*"
+pydantic = "*"
 
 [dev-packages]
 
