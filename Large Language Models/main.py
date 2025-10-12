@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 from rich import print
 from typing import List
 from dotenv import load_dotenv
+from rouge_score import rouge_scorer
+from sacrebleu.metrics import BLEU
+import evaluate
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,46 +16,41 @@ load_dotenv()
 # Setup the Cohere client
 co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key: https://dashboard.cohere.com/api-keys
 
-doctors_notes = """49 y/o Male with chronic macular rash to face & hair, worse in beard, eyebrows & nares.
-Itchy, flaky, slightly scaly. Moderate response to OTC steroid cream"""
+reference="Because the sound quality is the best out there"
+generated1="Because the audio experience is unrivaled"
+generated2="Because the microphone has the best quality"
 
-class Symptom(BaseModel):
-    symptom: str = Field(..., description="Symptom that a patient is experiencing")
-    affected_area: str = Field(
-        ...,
-        description="What part of the body the symptom is affecting",
-        json_schema_extra={"validators": [ValidChoices(["Head", "Face", "Neck", "Chest"], on_fail="reask")]}
-    )
+# Load BERTScore metric from Hugging Face
+bertscore = evaluate.load("bertscore")
 
-class CurrentMed(BaseModel):
-    medication: str = Field(..., description="Name of the medication the patient is taking")
-    response: str = Field(..., description="How the patient is responding to the medication")
+# Calculate BERTScore for generated1
+results1 = bertscore.compute(predictions=[generated1], references=[reference], lang="en")
+print("\n=== BERTScore for Generated 1 ===")
+print(f"Precision: {results1['precision'][0]:.4f}")
+print(f"Recall: {results1['recall'][0]:.4f}")
+print(f"F1 Score: {results1['f1'][0]:.4f}")
 
+# Calculate BERTScore for generated2
+results2 = bertscore.compute(predictions=[generated2], references=[reference], lang="en")
+print("\n=== BERTScore for Generated 2 ===")
+print(f"Precision: {results2['precision'][0]:.4f}")
+print(f"Recall: {results2['recall'][0]:.4f}")
+print(f"F1 Score: {results2['f1'][0]:.4f}")
 
-class PatientInfo(BaseModel):
-    gender: str = Field(..., description="Patient's gender")
-    age: int = Field(..., description="Patient's age", json_schema_extra={"validators": [ValidRange(0, 100)]})
-    symptoms: List[Symptom] = Field(..., description="Symptoms that the patient is experiencing")
-    current_meds: List[CurrentMed] = Field(..., description="Medications that the patient is currently taking")
+# Initialize ROUGE scorer with unigram (rouge1)
+scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
 
+# Calculate ROUGE-1 for generated1
+rouge1_scores1 = scorer.score(reference, generated1)
+print("\n=== ROUGE-1 (Unigram) for Generated 1 ===")
+print(f"Precision: {rouge1_scores1['rouge1'].precision:.4f}")
+print(f"Recall: {rouge1_scores1['rouge1'].recall:.4f}")
+print(f"F1 Score: {rouge1_scores1['rouge1'].fmeasure:.4f}")
 
-# Initialize a Guard object from the Pydantic model PatientInfo
-guard = gd.Guard.from_pydantic(PatientInfo)
+# Calculate ROUGE-1 for generated2
+rouge1_scores2 = scorer.score(reference, generated2)
+print("\n=== ROUGE-1 (Unigram) for Generated 2 ===")
+print(f"Precision: {rouge1_scores2['rouge1'].precision:.4f}")
+print(f"Recall: {rouge1_scores2['rouge1'].recall:.4f}")
+print(f"F1 Score: {rouge1_scores2['rouge1'].fmeasure:.4f}")
 
-# Prepare the prompt with the actual doctor's notes inserted
-prompt_text = f"""Given the following doctor's notes about a patient,
-please extract a dictionary that contains the patient's information.
-
-{doctors_notes}
-"""
-
-# Wrap the Cohere API call with the `guard` object
-response = guard(
-    messages=[{"role": "user", "content": prompt_text}],
-    model='command-a-03-2025',
-    temperature=0,
-    num_reasks=3,
-)
-
-# Print the validated output from the LLM
-print(response.validated_output)

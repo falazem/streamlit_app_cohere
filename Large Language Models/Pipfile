@@ -16,6 +16,10 @@ streamlit = "*"
 weaviate-client = "==4.5.4"
 guardrails-ai = "*"
 pydantic = "*"
+bert-score = "*"
+rouge-score = "*"
+sacrebleu = "*"
+evaluate = "*"
 
 [dev-packages]
 
