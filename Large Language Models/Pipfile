@@ -20,6 +20,8 @@ bert-score = "*"
 rouge-score = "*"
 sacrebleu = "*"
 evaluate = "*"
+hnswlib = "*"
+unstructured = "*"
 
 [dev-packages]
 
