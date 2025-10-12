@@ -16,41 +16,45 @@ load_dotenv()
 # Setup the Cohere client
 co = cohere.Client(os.getenv("COHERE_API_KEY")) # Get your free API key: https://dashboard.cohere.com/api-keys
 
-reference="Because the sound quality is the best out there"
-generated1="Because the audio experience is unrivaled"
-generated2="Because the microphone has the best quality"
+#define documents in a list
 
-# Load BERTScore metric from Hugging Face
-bertscore = evaluate.load("bertscore")
+documents = [
+    {
+        "title": "Tall penguins",
+        "text": "Emperor penguins are the tallest."},
+    {
+        "title": "Penguin habitats",
+        "text": "Emperor penguins only live in Antarctica."},
+    {
+        "title": "What are animals?",
+        "text": "Animals are different from plants."}
+]
 
-# Calculate BERTScore for generated1
-results1 = bertscore.compute(predictions=[generated1], references=[reference], lang="en")
-print("\n=== BERTScore for Generated 1 ===")
-print(f"Precision: {results1['precision'][0]:.4f}")
-print(f"Recall: {results1['recall'][0]:.4f}")
-print(f"F1 Score: {results1['f1'][0]:.4f}")
+# Get the user message
+message = "What are the tallest living penguins?"
 
-# Calculate BERTScore for generated2
-results2 = bertscore.compute(predictions=[generated2], references=[reference], lang="en")
-print("\n=== BERTScore for Generated 2 ===")
-print(f"Precision: {results2['precision'][0]:.4f}")
-print(f"Recall: {results2['recall'][0]:.4f}")
-print(f"F1 Score: {results2['f1'][0]:.4f}")
+# Generate the response
+response = co.chat_stream(message=message,
+                          documents=documents)
 
-# Initialize ROUGE scorer with unigram (rouge1)
-scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
+# Display the response
+citations = []
+cited_documents = []
 
-# Calculate ROUGE-1 for generated1
-rouge1_scores1 = scorer.score(reference, generated1)
-print("\n=== ROUGE-1 (Unigram) for Generated 1 ===")
-print(f"Precision: {rouge1_scores1['rouge1'].precision:.4f}")
-print(f"Recall: {rouge1_scores1['rouge1'].recall:.4f}")
-print(f"F1 Score: {rouge1_scores1['rouge1'].fmeasure:.4f}")
+for event in response:
+    if event.event_type == "text-generation":
+        print(event.text, end="")
+    elif event.event_type == "citation-generation":
+        citations.extend(event.citations)
+    elif event.event_type == "stream-end":
+      cited_documents = event.response.documents
 
-# Calculate ROUGE-1 for generated2
-rouge1_scores2 = scorer.score(reference, generated2)
-print("\n=== ROUGE-1 (Unigram) for Generated 2 ===")
-print(f"Precision: {rouge1_scores2['rouge1'].precision:.4f}")
-print(f"Recall: {rouge1_scores2['rouge1'].recall:.4f}")
-print(f"F1 Score: {rouge1_scores2['rouge1'].fmeasure:.4f}")
+# Display the citations and source documents
+if citations:
+  print("\n\nCITATIONS:")
+  for citation in citations:
+    print(citation)
 
+  print("\nDOCUMENTS:")
+  for document in cited_documents:
+    print(document)
