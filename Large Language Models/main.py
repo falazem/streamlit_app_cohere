@@ -141,3 +141,65 @@ class Vectorstore:
 vectorstore = Vectorstore(raw_documents)
 
 print(vectorstore.retrieve("Prompting by giving examples"))
+
+def run_chatbot(message, chat_history=[]):
+    
+    # Generate search queries by asking the model to create them
+    query_generation_response = co.chat(
+        message=f"Generate 1-3 search queries to help answer this question: {message}\nProvide only the search queries, one per line, without numbering or explanation.",
+        model="command-a-03-2025",
+    )
+    
+    # Parse the search queries from the response
+    search_queries = []
+    if query_generation_response.text.strip():
+        # Split by newlines and clean up
+        potential_queries = [q.strip() for q in query_generation_response.text.strip().split('\n') if q.strip()]
+        # Remove common prefixes/numbering
+        for q in potential_queries:
+            # Remove numbering like "1.", "2.", etc.
+            cleaned = q.lstrip('0123456789.-) ').strip('"\'')
+            if cleaned and len(cleaned) > 5:  # Basic validation
+                search_queries.append(cleaned)
+    
+    # If no queries were generated, use the original message as the query
+    if not search_queries:
+        search_queries = [message]
+
+    # Retrieve the documents
+    print("Retrieving information...", end="")
+
+    # Retrieve document chunks for each query
+    documents = []
+    for query in search_queries:
+        documents.extend(vectorstore.retrieve(query))
+
+    # Use document chunks to respond
+    response = co.chat_stream(
+        message=message,
+        model="command-a-03-2025",
+        documents=documents,
+        chat_history=chat_history,
+    )
+        
+    # Print the chatbot response and citations
+    chatbot_response = ""
+    print("\nChatbot:")
+
+    for event in response:
+        if event.event_type == "text-generation":
+            print(event.text, end="")
+            chatbot_response += event.text
+        if event.event_type == "stream-end":
+            if event.response.citations:
+                print("\n\nCITATIONS:")
+                for citation in event.response.citations:
+                    print(citation)
+            if event.response.documents:
+                print("\nCITED DOCUMENTS:")
+                for document in event.response.documents:
+                    print(document)
+            # Update the chat history for the next turn
+            chat_history = event.response.chat_history
+
+    return chat_history
